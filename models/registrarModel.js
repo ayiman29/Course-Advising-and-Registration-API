@@ -31,6 +31,3 @@ export async function deleteSection(courseId, sectionId) {
     [courseId, sectionId]
   );
 }
-
-await addSection(101, 3, 'Mon 9-11am', 40, "MrBeast");
-await addSection(102, 3, 'Fri 2-4pm', 40, "Berg");
