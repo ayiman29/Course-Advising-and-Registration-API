@@ -1,0 +1,19 @@
+import express from 'express';
+import {
+  addCourse,
+  deleteCourse,
+  addSection,
+  deleteSection
+} from '../controllers/registrarController.js';
+
+const router = express.Router();
+
+router.post('/course', addCourse);
+
+router.delete('/course/:courseId', deleteCourse);
+
+router.post('/section', addSection);
+
+router.delete('/section/:courseId/:sectionId', deleteSection);
+
+export default router;
