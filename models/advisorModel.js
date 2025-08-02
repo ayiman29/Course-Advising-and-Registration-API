@@ -42,7 +42,7 @@ export async function getWaitingStudentsCourses() {
 }
 
 
-export async function confirmAdvising(studentId, status) {
+export async function approveAdvising(studentId, status) {
   await pool.query(
     `UPDATE student
      SET status = ?
@@ -68,4 +68,3 @@ export async function confirmAdvising(studentId, status) {
 }
 
 
-await confirmAdvising(23301006, "denied")

@@ -1,5 +1,6 @@
 import pool from '../db.js'
 
+// NO DUPLICATE CHECK
 export async function addCourse(courseId, title, name, examSchedule) {
   await pool.query(
     `INSERT INTO course (Course_id, title, name, Exam_Schedule) 
@@ -14,6 +15,7 @@ export async function deleteCourse(courseId) {
   );
 }
 
+//NO DUPLICATE CHECK
 export async function addSection(courseId, sectionId, schedule, seatAvailability, faculty) {
   await pool.query(
     `INSERT INTO section (course_id, section_id, schedule, seat_availability, faculty)
