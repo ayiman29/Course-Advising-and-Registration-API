@@ -1,19 +1,62 @@
 import pool from '../db.js'
 
-export async function getAllCourses() {
-    const [courses] = await pool.query(
-        "SELECT * from COURSE"
-    )
-    return courses;
+export async function fetchCoursesWithSections(courseId = null) {
+  const query = `
+    SELECT 
+      c.course_id,
+      c.title,
+      c.name AS course_name,
+      c.exam_schedule,
+      c.course_credit,
+      s.section_id,
+      s.schedule,
+      s.seat_availability,
+      s.faculty
+    FROM course c
+    JOIN section s ON c.course_id = s.course_id
+    ${courseId ? 'WHERE c.course_id = ?' : ''}
+    ORDER BY c.course_id, s.section_id
+  `;
+
+  const [rows] = await pool.query(query, courseId ? [courseId] : []);
+
+
+  const courseMap = new Map();
+
+  for (const row of rows) {
+    if (!courseMap.has(row.course_id)) {
+      courseMap.set(row.course_id, {
+        course_id: row.course_id,
+        title: row.title,
+        course_name: row.course_name,
+        exam_schedule: row.exam_schedule,
+        course_credit: row.course_credit,
+        sections: []
+      });
+    }
+
+    courseMap.get(row.course_id).sections.push({
+      section_id: row.section_id,
+      schedule: row.schedule,
+      seat_availability: row.seat_availability,
+      faculty: row.faculty
+    });
+  }
+
+  return courseId ? courseMap.get(courseId) : Array.from(courseMap.values());
 }
 
-export async function getCourseDetail(courseId) {
-    const [courses] = await pool.query(
-        "SELECT * from course where Course_id = ?",
-        [courseId]
-    )
-    return courses[0];
+
+
+export async function getAllCourses() {
+  return await fetchCoursesWithSections();
 }
+
+
+export async function getCourseDetail(courseId) {
+  return await fetchCoursesWithSections(courseId);
+}
+
 
 
 export async function addCourse(studentId, courseId, sectionId) {
@@ -232,7 +275,7 @@ export async function confirmAdvising(studentId) {
   }
 }
 
-await confirmAdvising(23301006)
-const bit = await getMyCourses(23301006)
+
+const bit = await getCourseDetail(101)
 
 console.log(bit)
