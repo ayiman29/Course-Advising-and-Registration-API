@@ -1,5 +1,6 @@
 import pool from '../db.js'
 
+// add advisor ID when advising
 export async function getWaitingStudentsCourses() {
   const [rows] = await pool.query(
     `SELECT 

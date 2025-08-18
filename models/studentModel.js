@@ -147,7 +147,13 @@ export async function addCourse(studentId, courseId, sectionId) {
        VALUES (?, ?, ?)`,
       [studentId, courseId, sectionId]
     );
+    const advisorId = 99999999; 
 
+    await conn.query(
+      `INSERT INTO student_course (student_id, course_id, section_id, advisor_id)
+      VALUES (?, ?, ?, ?)`,
+      [studentId, courseId, sectionId, advisorId]
+    )
     await conn.query(
       `UPDATE section
        SET seat_availability = seat_availability - 1
@@ -178,20 +184,32 @@ export async function dropCourse(studentId, courseId, sectionId) {
 
   try {
     await conn.beginTransaction()
+
     const [[course]] = await conn.query(
       `SELECT course_credit FROM course WHERE course_id = ?`,
       [courseId]
     )
     const courseCredit = parseInt(course?.course_credit || 0)
-    const [result] = await conn.query(
-      `DELETE FROM student_course
+
+    const [[advisorRow]] = await conn.query(
+      `SELECT advisor_id 
+       FROM student_course 
        WHERE student_id = ? AND course_id = ? AND section_id = ?`,
       [studentId, courseId, sectionId]
     )
 
-    if (result.affectedRows === 0) {
+    if (!advisorRow) {
       throw new Error("No matching course found to drop.")
     }
+
+    const advisorId = advisorRow.advisor_id
+
+
+    const [result] = await conn.query(
+      `DELETE FROM student_course
+       WHERE student_id = ? AND course_id = ? AND section_id = ? AND advisor_id = ?`,
+      [studentId, courseId, sectionId, advisorId]
+    )
 
     await conn.query(
       `UPDATE section
@@ -215,6 +233,7 @@ export async function dropCourse(studentId, courseId, sectionId) {
     conn.release()
   }
 }
+
 
 
 
@@ -276,6 +295,3 @@ export async function confirmAdvising(studentId) {
 }
 
 
-const bit = await getCourseDetail(101)
-
-console.log(bit)

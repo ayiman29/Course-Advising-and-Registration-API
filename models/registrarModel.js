@@ -1,13 +1,14 @@
 import pool from '../db.js'
 
-// NO DUPLICATE CHECK
-export async function addCourse(courseId, title, name, examSchedule) {
+
+export async function addCourse(courseId, title, name, examSchedule, registrarId) {
   await pool.query(
-    `INSERT INTO course (Course_id, title, name, Exam_Schedule) 
-     VALUES (?, ?, ?, ?)`,
-    [courseId, title, name, examSchedule]
+    `INSERT INTO course (Course_id, title, name, Exam_Schedule, registrar_id) 
+     VALUES (?, ?, ?, ?, ?)`,
+    [courseId, title, name, examSchedule, registrarId]
   );
 }
+
 export async function deleteCourse(courseId) {
   await pool.query(
     `DELETE FROM course WHERE Course_id = ?`,
