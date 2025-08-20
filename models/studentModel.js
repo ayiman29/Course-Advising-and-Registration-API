@@ -288,6 +288,5 @@ export async function confirmAdvising(studentEmail) {
 }
 
 
-
 // issue: when max_credit, can't swap course
 // issue: advisor email used but not needed
