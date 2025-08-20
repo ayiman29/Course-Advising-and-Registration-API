@@ -6,9 +6,7 @@ import {
 
 const router = express.Router();
 
-
 router.get('/waiting-students', getWaitingStudentsCourses);
-
-router.put('/approve/:studentId', approveAdvising);
+router.put('/approve/:studentEmail', approveAdvising);
 
 export default router;

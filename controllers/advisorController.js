@@ -9,9 +9,8 @@ export async function getWaitingStudentsCourses(req, res) {
   }
 }
 
-
 export async function approveAdvising(req, res) {
-  const { studentId } = req.params;
+  const { studentEmail } = req.params; 
   const { status } = req.body;
 
   if (!['approved', 'denied'].includes(status)) {
@@ -19,11 +18,12 @@ export async function approveAdvising(req, res) {
   }
 
   try {
-    await advisorModel.approveAdvising(studentId, status);
-    res.status(200).json({ message: `Advising ${status} for student ${studentId}` });
+    await advisorModel.approveAdvising(studentEmail, status); 
+    res.status(200).json({ message: `Advising ${status} for student ${studentEmail}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
+
 
 
