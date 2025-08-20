@@ -1,20 +1,21 @@
 import * as registrarModel from '../models/registrarModel.js';
 
 export async function addCourse(req, res) {
-  const { courseId, title, name, examSchedule } = req.body;
+  const { courseId, title, name, examSchedule, courseCredit, registrarEmail } = req.body;
 
-  if (!courseId || !title || !name || !examSchedule) {
-    return res.status(400).json({ error: "Missing required fields: courseId, title, name, examSchedule" });
+  if (!courseId || !title || !name || !examSchedule || !registrarEmail || courseCredit == null) {
+    return res.status(400).json({ 
+      error: "Missing required fields: courseId, title, name, examSchedule, registrarEmail, courseCredit" 
+    });
   }
 
   try {
-    await registrarModel.addCourse(courseId, title, name, examSchedule);
+    await registrarModel.addCourse(courseId, title, name, examSchedule, courseCredit, registrarEmail);
     res.status(201).json({ message: "Course added successfully." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
-
 
 export async function deleteCourse(req, res) {
   const { courseId } = req.params;
@@ -31,12 +32,13 @@ export async function deleteCourse(req, res) {
   }
 }
 
-
 export async function addSection(req, res) {
   const { courseId, sectionId, schedule, seatAvailability, faculty } = req.body;
 
   if (!courseId || !sectionId || !schedule || seatAvailability == null || !faculty) {
-    return res.status(400).json({ error: "Missing required fields: courseId, sectionId, schedule, seatAvailability, faculty" });
+    return res.status(400).json({ 
+      error: "Missing required fields: courseId, sectionId, schedule, seatAvailability, faculty" 
+    });
   }
 
   try {
@@ -46,7 +48,6 @@ export async function addSection(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
-
 
 export async function deleteSection(req, res) {
   const { courseId, sectionId } = req.params;
