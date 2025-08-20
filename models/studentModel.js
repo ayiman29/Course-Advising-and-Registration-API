@@ -59,7 +59,7 @@ export async function getCourseDetail(courseId) {
 
 
 
-export async function addCourse(studentId, courseId, sectionId) {
+export async function addCourse(studentEmail, courseId, sectionId, advisorEmail) {
   const conn = await pool.getConnection();
 
   try {
@@ -74,13 +74,12 @@ export async function addCourse(studentId, courseId, sectionId) {
 
     const [rows] = await conn.query(
       `SELECT COALESCE(SUM(c.course_credit), 0) AS total_credit
-       FROM student_course sc
-       JOIN course c ON sc.course_id = c.course_id
-       WHERE sc.student_id = ?`,
-      [studentId]
+       FROM manages m
+       JOIN course c ON m.course_id = c.course_id
+       WHERE m.student_email = ?`,
+      [studentEmail]
     );
     const totalCredit = Number(rows[0]?.total_credit) || 0;
-
 
     if (totalCredit + newCourseCredit > 15) {
       throw new Error('Credit limit exceeded (max 15 credits)');
@@ -94,8 +93,10 @@ export async function addCourse(studentId, courseId, sectionId) {
     const newSchedule = section.schedule;
 
     const [[existingEntry]] = await conn.query(
-      `SELECT section_id FROM student_course WHERE student_id = ? AND course_id = ?`,
-      [studentId, courseId]
+      `SELECT section_id 
+       FROM manages 
+       WHERE student_email = ? AND course_id = ?`,
+      [studentEmail, courseId]
     );
 
     if (existingEntry) {
@@ -105,10 +106,11 @@ export async function addCourse(studentId, courseId, sectionId) {
 
       const [otherCourses] = await conn.query(
         `SELECT s.schedule
-         FROM student_course sc
-         JOIN section s ON sc.course_id = s.course_id AND sc.section_id = s.section_id
-         WHERE sc.student_id = ? AND NOT (sc.course_id = ? AND sc.section_id = ?)`,
-        [studentId, courseId, existingEntry.section_id]
+         FROM manages m
+         JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
+         WHERE m.student_email = ? 
+           AND NOT (m.course_id = ? AND m.section_id = ?)`,
+        [studentEmail, courseId, existingEntry.section_id]
       );
 
       const hasClash = otherCourses.some(row => row.schedule === newSchedule);
@@ -117,8 +119,8 @@ export async function addCourse(studentId, courseId, sectionId) {
       }
 
       await conn.query(
-        `DELETE FROM student_course WHERE student_id = ? AND course_id = ?`,
-        [studentId, courseId]
+        `DELETE FROM manages WHERE student_email = ? AND course_id = ?`,
+        [studentEmail, courseId]
       );
 
       await conn.query(
@@ -130,10 +132,10 @@ export async function addCourse(studentId, courseId, sectionId) {
     } else {
       const [existing] = await conn.query(
         `SELECT s.schedule
-         FROM student_course sc
-         JOIN section s ON sc.course_id = s.course_id AND sc.section_id = s.section_id
-         WHERE sc.student_id = ?`,
-        [studentId]
+         FROM manages m
+         JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
+         WHERE m.student_email = ?`,
+        [studentEmail]
       );
 
       const hasClash = existing.some(row => row.schedule === newSchedule);
@@ -143,17 +145,11 @@ export async function addCourse(studentId, courseId, sectionId) {
     }
 
     await conn.query(
-      `INSERT INTO student_course (student_id, course_id, section_id)
-       VALUES (?, ?, ?)`,
-      [studentId, courseId, sectionId]
+      `INSERT INTO manages (course_id, section_id, student_email, advisor_email)
+       VALUES (?, ?, ?, ?)`,
+      [courseId, sectionId, studentEmail, advisorEmail]
     );
-    const advisorId = 99999999; 
 
-    await conn.query(
-      `INSERT INTO student_course (student_id, course_id, section_id, advisor_id)
-      VALUES (?, ?, ?, ?)`,
-      [studentId, courseId, sectionId, advisorId]
-    )
     await conn.query(
       `UPDATE section
        SET seat_availability = seat_availability - 1
@@ -163,9 +159,9 @@ export async function addCourse(studentId, courseId, sectionId) {
 
     await conn.query(
       `UPDATE student
-       SET student_credit = student_credit + ?
-       WHERE student_id = ?`,
-      [newCourseCredit, studentId]
+       SET credit = credit + ?
+       WHERE student_email = ?`,
+      [newCourseCredit, studentEmail]
     );
 
     await conn.commit();
@@ -179,65 +175,63 @@ export async function addCourse(studentId, courseId, sectionId) {
 
 
 
-export async function dropCourse(studentId, courseId, sectionId) {
-  const conn = await pool.getConnection()
+export async function dropCourse(studentEmail, courseId, sectionId) {
+  const conn = await pool.getConnection();
 
   try {
-    await conn.beginTransaction()
+    await conn.beginTransaction();
 
     const [[course]] = await conn.query(
       `SELECT course_credit FROM course WHERE course_id = ?`,
       [courseId]
-    )
-    const courseCredit = parseInt(course?.course_credit || 0)
+    );
+    const courseCredit = parseInt(course?.course_credit || 0);
 
     const [[advisorRow]] = await conn.query(
-      `SELECT advisor_id 
-       FROM student_course 
-       WHERE student_id = ? AND course_id = ? AND section_id = ?`,
-      [studentId, courseId, sectionId]
-    )
+      `SELECT advisor_email 
+       FROM manages 
+       WHERE student_email = ? AND course_id = ? AND section_id = ?`,
+      [studentEmail, courseId, sectionId]
+    );
 
     if (!advisorRow) {
-      throw new Error("No matching course found to drop.")
+      throw new Error("No matching course found to drop.");
     }
 
-    const advisorId = advisorRow.advisor_id
+    const advisorEmail = advisorRow.advisor_email;
 
-
-    const [result] = await conn.query(
-      `DELETE FROM student_course
-       WHERE student_id = ? AND course_id = ? AND section_id = ? AND advisor_id = ?`,
-      [studentId, courseId, sectionId, advisorId]
-    )
+    await conn.query(
+      `DELETE FROM manages
+       WHERE student_email = ? AND course_id = ? AND section_id = ? AND advisor_email = ?`,
+      [studentEmail, courseId, sectionId, advisorEmail]
+    );
 
     await conn.query(
       `UPDATE section
        SET seat_availability = seat_availability + 1
        WHERE course_id = ? AND section_id = ?`,
       [courseId, sectionId]
-    )
+    );
 
     await conn.query(
       `UPDATE student
-       SET student_credit = student_credit - ?
-       WHERE student_id = ?`,
-      [courseCredit, studentId]
-    )
+       SET credit = credit - ?
+       WHERE student_email = ?`,
+      [courseCredit, studentEmail]
+    );
 
-    await conn.commit()
+    await conn.commit();
   } catch (err) {
-    await conn.rollback()
-    throw err
+    await conn.rollback();
+    throw err;
   } finally {
-    conn.release()
+    conn.release();
   }
 }
 
 
 
-
-export async function getMyCourses(studentId) {
+export async function getMyCourses(studentEmail) {
   const [courses] = await pool.query(
     `SELECT 
         c.course_id,
@@ -246,52 +240,54 @@ export async function getMyCourses(studentId) {
         s.section_id,
         s.schedule,
         s.faculty
-     FROM student_course sc
-     JOIN course c ON sc.course_id = c.course_id
-     JOIN section s ON sc.course_id = s.course_id AND sc.section_id = s.section_id
-     WHERE sc.student_id = ?`,
-    [studentId]
-  )
-  return courses
+     FROM manages m
+     JOIN course c ON m.course_id = c.course_id
+     JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
+     WHERE m.student_email = ?`,
+    [studentEmail]
+  );
+  return courses;
 }
 
-export async function getStudentInfo(studentId) {
+
+export async function getStudentInfo(studentEmail) {
     const [info] = await pool.query(
-        "SELECT * from student WHERE Student_id = ?",
-        [studentId]
-
-    )
-    return info[0]
+        "SELECT * FROM student WHERE student_email = ?",
+        [studentEmail]
+    );
+    return info[0];
 }
 
-export async function confirmAdvising(studentId) {
-  const conn = await pool.getConnection()
+export async function confirmAdvising(studentEmail) {
+  const conn = await pool.getConnection();
 
   try {
     const [[row]] = await conn.query(
       `SELECT COALESCE(SUM(c.course_credit), 0) AS total_credit
-       FROM student_course sc
-       JOIN course c ON sc.course_id = c.course_id
-       WHERE sc.student_id = ?`,
-      [studentId]
-    )
+       FROM manages m
+       JOIN course c ON m.course_id = c.course_id
+       WHERE m.student_email = ?`,
+      [studentEmail]
+    );
 
-    const totalCredit = parseInt(row?.total_credit || 0)
+    const totalCredit = parseInt(row?.total_credit || 0);
 
     if (totalCredit < 3) {
-      throw new Error("Advising cannot be confirmed. Minimum 3 credits required.")
+      throw new Error("Advising cannot be confirmed. Minimum 3 credits required.");
     }
 
     await conn.query(
       `UPDATE student
        SET status = 'WAITING'
-       WHERE student_id = ?`,
-      [studentId]
-    )
-
+       WHERE student_email = ?`,
+      [studentEmail]
+    );
   } finally {
-    conn.release()
+    conn.release();
   }
 }
 
 
+
+// issue: when max_credit, can't swap course
+// issue: advisor email used but not needed
