@@ -58,7 +58,6 @@ export async function getCourseDetail(courseId) {
 }
 
 
-
 export async function addCourse(studentEmail, courseId, sectionId, advisorEmail) {
   const conn = await pool.getConnection();
 
@@ -72,6 +71,13 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
     if (!courseRow) throw new Error('Course not found');
     const newCourseCredit = courseRow.course_credit;
 
+    const [[existingEntry]] = await conn.query(
+      `SELECT section_id 
+       FROM manages 
+       WHERE student_email = ? AND course_id = ?`,
+      [studentEmail, courseId]
+    );
+
     const [rows] = await conn.query(
       `SELECT COALESCE(SUM(c.course_credit), 0) AS total_credit
        FROM manages m
@@ -79,25 +85,24 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
        WHERE m.student_email = ?`,
       [studentEmail]
     );
-    const totalCredit = Number(rows[0]?.total_credit) || 0;
+    let totalCredit = Number(rows[0]?.total_credit) || 0;
+
+    if (existingEntry) totalCredit -= newCourseCredit;
 
     if (totalCredit + newCourseCredit > 15) {
       throw new Error('Credit limit exceeded (max 15 credits)');
     }
 
     const [[section]] = await conn.query(
-      `SELECT schedule FROM section WHERE course_id = ? AND section_id = ?`,
+      `SELECT schedule, seat_availability 
+       FROM section 
+       WHERE course_id = ? AND section_id = ?`,
       [courseId, sectionId]
     );
     if (!section) throw new Error('Section not found');
-    const newSchedule = section.schedule;
+    if (section.seat_availability <= 0) throw new Error('No seats available in this section');
 
-    const [[existingEntry]] = await conn.query(
-      `SELECT section_id 
-       FROM manages 
-       WHERE student_email = ? AND course_id = ?`,
-      [studentEmail, courseId]
-    );
+    const newSchedule = section.schedule;
 
     if (existingEntry) {
       if (existingEntry.section_id === sectionId) {
@@ -114,9 +119,7 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
       );
 
       const hasClash = otherCourses.some(row => row.schedule === newSchedule);
-      if (hasClash) {
-        throw new Error('Schedule clash detected. Section not changed.');
-      }
+      if (hasClash) throw new Error('Schedule clash detected. Section not changed.');
 
       await conn.query(
         `DELETE FROM manages WHERE student_email = ? AND course_id = ?`,
@@ -139,9 +142,7 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
       );
 
       const hasClash = existing.some(row => row.schedule === newSchedule);
-      if (hasClash) {
-        throw new Error('Schedule clash detected. Course not added.');
-      }
+      if (hasClash) throw new Error('Schedule clash detected. Course not added.');
     }
 
     await conn.query(
@@ -157,12 +158,14 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
       [courseId, sectionId]
     );
 
-    await conn.query(
-      `UPDATE student
-       SET credit = credit + ?
-       WHERE student_email = ?`,
-      [newCourseCredit, studentEmail]
-    );
+    if (!existingEntry) {
+      await conn.query(
+        `UPDATE student
+         SET credit = credit + ?
+         WHERE student_email = ?`,
+        [newCourseCredit, studentEmail]
+      );
+    }
 
     await conn.commit();
   } catch (err) {
@@ -172,6 +175,7 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
     conn.release();
   }
 }
+
 
 
 
@@ -287,6 +291,6 @@ export async function confirmAdvising(studentEmail) {
   }
 }
 
-
-// issue: when max_credit, can't swap course
+// issue: seat availability not being checked (SOLVED)
+// issue: when max_credit, can't swap course (SOLVED)
 // issue: advisor email used but not needed, use some default?

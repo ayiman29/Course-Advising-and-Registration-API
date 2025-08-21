@@ -1,4 +1,5 @@
 import pool from '../db.js'
+import { addCourse as studentAddCourse, dropCourse as studentDropCourse } from './studentModel.js';
 
 export async function getWaitingStudentsCourses() {
   const [rows] = await pool.query(
@@ -66,6 +67,14 @@ export async function approveAdvising(studentEmail, status) {
       );
     }
   }
+}
+
+export async function advisorAddCourse(advisorEmail, studentEmail, courseId, sectionId) {
+  return await studentAddCourse(studentEmail, courseId, sectionId, advisorEmail);
+}
+
+export async function advisorDropCourse(studentEmail, courseId, sectionId) {
+  return await studentDropCourse(studentEmail, courseId, sectionId);
 }
 
 

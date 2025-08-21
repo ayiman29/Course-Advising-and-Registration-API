@@ -25,5 +25,40 @@ export async function approveAdvising(req, res) {
   }
 }
 
+export async function addCourse(req, res) {
+  const { studentEmail, courseId, sectionId, advisorEmail } = req.body;
 
+  if (!studentEmail || !courseId || !sectionId || !advisorEmail) {
+    return res.status(400).json({
+      error: "Missing required fields: studentEmail, courseId, sectionId, advisorEmail"
+    });
+  }
 
+  try {
+    await advisorModel.advisorAddCourse(advisorEmail, studentEmail, courseId, sectionId);
+    res.status(200).json({ 
+      message: `Course ${courseId} (Section ${sectionId}) added for ${studentEmail} by advisor ${advisorEmail}` 
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+export async function dropCourse(req, res) {
+  const { studentEmail, courseId, sectionId} = req.body;
+
+  if (!studentEmail || !courseId || !sectionId) {
+    return res.status(400).json({
+      error: "Missing required fields: studentEmail, courseId and sectionId"
+    });
+  }
+
+  try {
+    await advisorModel.advisorDropCourse(studentEmail, courseId, sectionId);
+    res.status(200).json({ 
+      message: `Course ${courseId} (Section ${sectionId}) dropped for ${studentEmail}` 
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
