@@ -58,7 +58,7 @@ export async function getCourseDetail(courseId) {
 }
 
 
-export async function addCourse(studentEmail, courseId, sectionId, advisorEmail) {
+export async function addCourse(studentId, courseId, sectionId, advisorId) {
   const conn = await pool.getConnection();
 
   try {
@@ -71,19 +71,21 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
     if (!courseRow) throw new Error('Course not found');
     const newCourseCredit = courseRow.course_credit;
 
+
     const [[existingEntry]] = await conn.query(
       `SELECT section_id 
        FROM manages 
-       WHERE student_email = ? AND course_id = ?`,
-      [studentEmail, courseId]
+       WHERE student_id = ? AND course_id = ?`,
+      [studentId, courseId]
     );
+
 
     const [rows] = await conn.query(
       `SELECT COALESCE(SUM(c.course_credit), 0) AS total_credit
        FROM manages m
        JOIN course c ON m.course_id = c.course_id
-       WHERE m.student_email = ?`,
-      [studentEmail]
+       WHERE m.student_id = ?`,
+      [studentId]
     );
     let totalCredit = Number(rows[0]?.total_credit) || 0;
 
@@ -92,6 +94,7 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
     if (totalCredit + newCourseCredit > 15) {
       throw new Error('Credit limit exceeded (max 15 credits)');
     }
+
 
     const [[section]] = await conn.query(
       `SELECT schedule, seat_availability 
@@ -104,6 +107,7 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
 
     const newSchedule = section.schedule;
 
+ 
     if (existingEntry) {
       if (existingEntry.section_id === sectionId) {
         throw new Error('Course already added with the same section.');
@@ -113,18 +117,20 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
         `SELECT s.schedule
          FROM manages m
          JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
-         WHERE m.student_email = ? 
+         WHERE m.student_id = ? 
            AND NOT (m.course_id = ? AND m.section_id = ?)`,
-        [studentEmail, courseId, existingEntry.section_id]
+        [studentId, courseId, existingEntry.section_id]
       );
 
       const hasClash = otherCourses.some(row => row.schedule === newSchedule);
       if (hasClash) throw new Error('Schedule clash detected. Section not changed.');
 
+
       await conn.query(
-        `DELETE FROM manages WHERE student_email = ? AND course_id = ?`,
-        [studentEmail, courseId]
+        `DELETE FROM manages WHERE student_id = ? AND course_id = ?`,
+        [studentId, courseId]
       );
+
 
       await conn.query(
         `UPDATE section
@@ -137,19 +143,21 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
         `SELECT s.schedule
          FROM manages m
          JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
-         WHERE m.student_email = ?`,
-        [studentEmail]
+         WHERE m.student_id = ?`,
+        [studentId]
       );
 
       const hasClash = existing.some(row => row.schedule === newSchedule);
       if (hasClash) throw new Error('Schedule clash detected. Course not added.');
     }
 
+
     await conn.query(
-      `INSERT INTO manages (course_id, section_id, student_email, advisor_email)
+      `INSERT INTO manages (course_id, section_id, student_id, advisor_id)
        VALUES (?, ?, ?, ?)`,
-      [courseId, sectionId, studentEmail, advisorEmail]
+      [courseId, sectionId, studentId, advisorId]
     );
+
 
     await conn.query(
       `UPDATE section
@@ -158,12 +166,13 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
       [courseId, sectionId]
     );
 
+  
     if (!existingEntry) {
       await conn.query(
         `UPDATE student
          SET credit = credit + ?
-         WHERE student_email = ?`,
-        [newCourseCredit, studentEmail]
+         WHERE student_id = ?`,
+        [newCourseCredit, studentId]
       );
     }
 
@@ -179,7 +188,7 @@ export async function addCourse(studentEmail, courseId, sectionId, advisorEmail)
 
 
 
-export async function dropCourse(studentEmail, courseId, sectionId) {
+export async function dropCourse(studentId, courseId, sectionId) {
   const conn = await pool.getConnection();
 
   try {
@@ -192,22 +201,22 @@ export async function dropCourse(studentEmail, courseId, sectionId) {
     const courseCredit = parseInt(course?.course_credit || 0);
 
     const [[advisorRow]] = await conn.query(
-      `SELECT advisor_email 
+      `SELECT advisor_id 
        FROM manages 
-       WHERE student_email = ? AND course_id = ? AND section_id = ?`,
-      [studentEmail, courseId, sectionId]
+       WHERE student_id = ? AND course_id = ? AND section_id = ?`,
+      [studentId, courseId, sectionId]
     );
 
     if (!advisorRow) {
       throw new Error("No matching course found to drop.");
     }
 
-    const advisorEmail = advisorRow.advisor_email;
+    const advisorId = advisorRow.advisor_id;
 
     await conn.query(
       `DELETE FROM manages
-       WHERE student_email = ? AND course_id = ? AND section_id = ? AND advisor_email = ?`,
-      [studentEmail, courseId, sectionId, advisorEmail]
+       WHERE student_id = ? AND course_id = ? AND section_id = ? AND advisor_id = ?`,
+      [studentId, courseId, sectionId, advisorId]
     );
 
     await conn.query(
@@ -220,8 +229,8 @@ export async function dropCourse(studentEmail, courseId, sectionId) {
     await conn.query(
       `UPDATE student
        SET credit = credit - ?
-       WHERE student_email = ?`,
-      [courseCredit, studentEmail]
+       WHERE student_id = ?`,
+      [courseCredit, studentId]
     );
 
     await conn.commit();
@@ -235,7 +244,7 @@ export async function dropCourse(studentEmail, courseId, sectionId) {
 
 
 
-export async function getMyCourses(studentEmail) {
+export async function getMyCourses(studentId) {
   const [courses] = await pool.query(
     `SELECT 
         c.course_id,
@@ -247,22 +256,23 @@ export async function getMyCourses(studentEmail) {
      FROM manages m
      JOIN course c ON m.course_id = c.course_id
      JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
-     WHERE m.student_email = ?`,
-    [studentEmail]
+     WHERE m.student_id = ?`,
+    [studentId]
   );
   return courses;
 }
 
 
-export async function getStudentInfo(studentEmail) {
+
+export async function getStudentInfo(studentId) {
     const [info] = await pool.query(
-        "SELECT * FROM student WHERE student_email = ?",
-        [studentEmail]
+        "SELECT * FROM student WHERE student_id = ?",
+        [studentId]
     );
     return info[0];
 }
 
-export async function confirmAdvising(studentEmail) {
+export async function confirmAdvising(studentId) {
   const conn = await pool.getConnection();
 
   try {
@@ -270,8 +280,8 @@ export async function confirmAdvising(studentEmail) {
       `SELECT COALESCE(SUM(c.course_credit), 0) AS total_credit
        FROM manages m
        JOIN course c ON m.course_id = c.course_id
-       WHERE m.student_email = ?`,
-      [studentEmail]
+       WHERE m.student_id = ?`,
+      [studentId]
     );
 
     const totalCredit = parseInt(row?.total_credit || 0);
@@ -280,16 +290,18 @@ export async function confirmAdvising(studentEmail) {
       throw new Error("Advising cannot be confirmed. Minimum 3 credits required.");
     }
 
+
     await conn.query(
       `UPDATE student
-       SET status = 'WAITING'
-       WHERE student_email = ?`,
-      [studentEmail]
+       SET status = 'waiting'
+       WHERE student_id = ?`,
+      [studentId]
     );
   } finally {
     conn.release();
   }
 }
+
 
 // issue: seat availability not being checked (SOLVED)
 // issue: when max_credit, can't swap course (SOLVED)

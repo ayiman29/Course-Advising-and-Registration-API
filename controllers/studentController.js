@@ -30,14 +30,14 @@ export async function getCourseDetail(req, res) {
 }
 
 export async function addCourse(req, res) {
-  const { studentEmail, courseId, sectionId, advisorEmail } = req.body;
+  const { studentId, courseId, sectionId, advisorId } = req.body;
 
-  if (!studentEmail || !courseId || !sectionId || !advisorEmail) {
-    return res.status(400).json({ error: "Missing required fields: studentEmail, courseId, sectionId, advisorEmail" });
+  if (!studentId || !courseId || !sectionId || !advisorId) {
+    return res.status(400).json({ error: "Missing required fields: studentId, courseId, sectionId, advisorId" });
   }
 
   try {
-    await studentModel.addCourse(studentEmail, courseId, sectionId, advisorEmail);
+    await studentModel.addCourse(studentId, courseId, sectionId, advisorId);
     res.status(200).json({ message: "Course added successfully." });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -45,14 +45,14 @@ export async function addCourse(req, res) {
 }
 
 export async function dropCourse(req, res) {
-  const { studentEmail, courseId, sectionId } = req.body;
+  const { studentId, courseId, sectionId } = req.body;
 
-  if (!studentEmail || !courseId || !sectionId) {
-    return res.status(400).json({ error: "Missing required fields: studentEmail, courseId, sectionId" });
+  if (!studentId || !courseId || !sectionId) {
+    return res.status(400).json({ error: "Missing required fields: studentId, courseId, sectionId" });
   }
 
   try {
-    await studentModel.dropCourse(studentEmail, courseId, sectionId);
+    await studentModel.dropCourse(studentId, courseId, sectionId);
     res.status(200).json({ message: "Course dropped successfully." });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -60,14 +60,14 @@ export async function dropCourse(req, res) {
 }
 
 export async function getMyCourses(req, res) {
-  const { studentEmail } = req.params;
+  const studentId = parseInt(req.params.studentId);
 
-  if (!studentEmail) {
-    return res.status(400).json({ error: "Missing studentEmail in request parameters" });
+  if (isNaN(studentId)) {
+    return res.status(400).json({ error: "Missing or invalid studentId in request parameters" });
   }
 
   try {
-    const courses = await studentModel.getMyCourses(studentEmail);
+    const courses = await studentModel.getMyCourses(studentId);
     res.status(200).json(courses);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -75,14 +75,14 @@ export async function getMyCourses(req, res) {
 }
 
 export async function getStudentInfo(req, res) {
-  const { studentEmail } = req.params;
+  const studentId = parseInt(req.params.studentId);
 
-  if (!studentEmail) {
-    return res.status(400).json({ error: 'Missing studentEmail in request parameters' });
+  if (isNaN(studentId)) {
+    return res.status(400).json({ error: 'Missing or invalid studentId in request parameters' });
   }
 
   try {
-    const student = await studentModel.getStudentInfo(studentEmail);
+    const student = await studentModel.getStudentInfo(studentId);
     if (!student) {
       return res.status(404).json({ error: 'Student not found' });
     }
@@ -93,15 +93,15 @@ export async function getStudentInfo(req, res) {
 }
 
 export async function confirmAdvising(req, res) {
-  const { studentEmail } = req.params;
+  const studentId = parseInt(req.params.studentId);
 
-  if (!studentEmail) {
-    return res.status(400).json({ error: 'Missing studentEmail in request parameters' });
+  if (isNaN(studentId)) {
+    return res.status(400).json({ error: 'Missing or invalid studentId in request parameters' });
   }
 
   try {
-    await studentModel.confirmAdvising(studentEmail);
-    res.status(200).json({ message: 'Advising status updated to WAITING.' });
+    await studentModel.confirmAdvising(studentId);
+    res.status(200).json({ message: 'Advising status updated to waiting.' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
