@@ -1,17 +1,17 @@
 import * as registrarModel from '../models/registrarModel.js';
 
 export async function addCourse(req, res) {
-  const { courseId, title, name, examSchedule, courseCredit, registrarEmail } = req.body;
+  const { courseId, title, name, examSchedule, courseCredit, registrarId, registrarEmail } = req.body;
 
-  if (!courseId || !title || !name || !examSchedule || !registrarEmail || courseCredit == null) {
+  if (!courseId || !title || !name || !examSchedule || !courseCredit == null || !registrarId || !registrarEmail) {
     return res.status(400).json({ 
-      error: "Missing required fields: courseId, title, name, examSchedule, registrarEmail, courseCredit" 
+      error: "Missing required fields: courseId, title, name, examSchedule, courseCredit, registrarId, registrarEmail" 
     });
   }
 
   try {
-    await registrarModel.addCourse(courseId, title, name, examSchedule, courseCredit, registrarEmail);
-    res.status(201).json({ message: "Course added successfully." });
+    await registrarModel.addCourse(courseId, title, name, examSchedule, courseCredit, registrarId, registrarEmail);
+    res.status(201).json({ message: "Course updated successfully." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -43,7 +43,7 @@ export async function addSection(req, res) {
 
   try {
     await registrarModel.addSection(courseId, sectionId, schedule, seatAvailability, faculty);
-    res.status(201).json({ message: "Section added successfully." });
+    res.status(201).json({ message: "Section updated successfully." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
