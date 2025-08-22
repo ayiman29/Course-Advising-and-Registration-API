@@ -9,7 +9,7 @@ import {
 const router = express.Router();
 
 router.get('/waiting-students', getWaitingStudentsCourses);
-router.put('/approve/:studentEmail', approveAdvising);
+router.put('/approve/:studentId', approveAdvising);
 router.post('/add-course', addCourse);
 router.post('/drop-course', dropCourse);
 

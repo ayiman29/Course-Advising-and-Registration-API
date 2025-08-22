@@ -10,7 +10,7 @@ export async function getWaitingStudentsCourses(req, res) {
 }
 
 export async function approveAdvising(req, res) {
-  const { studentEmail } = req.params; 
+  const { studentId } = req.params; 
   const { status } = req.body;
 
   if (!['approved', 'denied'].includes(status)) {
@@ -18,26 +18,26 @@ export async function approveAdvising(req, res) {
   }
 
   try {
-    await advisorModel.approveAdvising(studentEmail, status); 
-    res.status(200).json({ message: `Advising ${status} for student ${studentEmail}` });
+    await advisorModel.approveAdvising(studentId, status); 
+    res.status(200).json({ message: `Advising ${status} for student ${studentId}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
 
 export async function addCourse(req, res) {
-  const { studentEmail, courseId, sectionId, advisorEmail } = req.body;
+  const { studentId, courseId, sectionId, advisorId } = req.body;
 
-  if (!studentEmail || !courseId || !sectionId || !advisorEmail) {
+  if (!studentId || !courseId || !sectionId || !advisorId) {
     return res.status(400).json({
-      error: "Missing required fields: studentEmail, courseId, sectionId, advisorEmail"
+      error: "Missing required fields: studentId, courseId, sectionId, advisorId"
     });
   }
 
   try {
-    await advisorModel.advisorAddCourse(advisorEmail, studentEmail, courseId, sectionId);
+    await advisorModel.advisorAddCourse(advisorId, studentId, courseId, sectionId);
     res.status(200).json({ 
-      message: `Course ${courseId} (Section ${sectionId}) added for ${studentEmail} by advisor ${advisorEmail}` 
+      message: `Course ${courseId} (Section ${sectionId}) added for student ${studentId} by advisor ${advisorId}` 
     });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -45,18 +45,18 @@ export async function addCourse(req, res) {
 }
 
 export async function dropCourse(req, res) {
-  const { studentEmail, courseId, sectionId} = req.body;
+  const { studentId, courseId, sectionId, advisorId } = req.body;
 
-  if (!studentEmail || !courseId || !sectionId) {
+  if (!studentId || !courseId || !sectionId || !advisorId) {
     return res.status(400).json({
-      error: "Missing required fields: studentEmail, courseId and sectionId"
+      error: "Missing required fields: studentId, courseId, sectionId, advisorId"
     });
   }
 
   try {
-    await advisorModel.advisorDropCourse(studentEmail, courseId, sectionId);
+    await advisorModel.advisorDropCourse(advisorId, studentId, courseId, sectionId);
     res.status(200).json({ 
-      message: `Course ${courseId} (Section ${sectionId}) dropped for ${studentEmail}` 
+      message: `Course ${courseId} (Section ${sectionId}) dropped for student ${studentId} by advisor ${advisorId}` 
     });
   } catch (err) {
     res.status(400).json({ error: err.message });
