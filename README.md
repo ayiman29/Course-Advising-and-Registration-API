@@ -33,26 +33,26 @@ npm run dev
 | ------ | ----------------------------------------- | ----------------------------------------------- |
 | GET    | /students/courses                         | -                                               |
 | GET    | /students/courses/\:courseId              | courseId                                        |
-| POST   | /students/add-course                      | studentEmail, courseId, sectionId, advisorEmail |
-| POST   | /students/drop-course                     | studentEmail, courseId, sectionId               |
-| GET    | /students/my-courses/\:studentEmail       | studentEmail                                    |
-| GET    | /students/info/\:studentEmail             | studentEmail                                    |
-| PUT    | /students/confirm-advising/\:studentEmail | studentEmail                                    |
+| POST   | /students/add-course                      | studentId, courseId, sectionId, advisorId |
+| POST   | /students/drop-course                     | studentId, courseId, sectionId               |
+| GET    | /students/my-courses/\:studentId       | studentId                                    |
+| GET    | /students/info/\:studentId             | studentId                                    |
+| PUT    | /students/confirm-advising/\:studentId | studentEmail                                    |
 
 ### Advisor
 
 | Method | Endpoint                         | Params / Body                                   |
 | ------ | -------------------------------- | ----------------------------------------------- |
 | GET    | /advisors/waiting-students       | -                                               |
-| PUT    | /advisors/approve/\:studentEmail | studentEmail, status (`approved` / `denied`)    |
-| POST   | /advisors/add-course             | advisorEmail, studentEmail, courseId, sectionId |
-| POST   | /advisors/drop-course            | studentEmail, courseId, sectionId               |
+| PUT    | /advisors/approve/\:studentId | studentId, status (`approved` / `denied`)    |
+| POST   | /advisors/add-course             | advisorId, studentId, courseId, sectionId |
+| POST   | /advisors/drop-course            | studentId, courseId, sectionId               |
 
 ### Registrar
 
 | Method | Endpoint                                  | Params / Body                                                    |
 | ------ | ----------------------------------------- | ---------------------------------------------------------------- |
-| POST   | /registrar/course                         | courseId, title, name, examSchedule, courseCredit, registrarEmail|
+| POST   | /registrar/course                         | courseId, title, name, examSchedule, courseCredit, registrarEmail, registrarId|
 | DELETE | /registrar/course/\:courseId              | courseId                                                         |
 | POST   | /registrar/section                        | courseId, sectionId, schedule, faculty, seatAvailability         |
 | DELETE | /registrar/section/\:courseId/\:sectionId | courseId, sectionId                                              |
