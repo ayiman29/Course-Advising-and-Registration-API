@@ -1,4 +1,17 @@
 import pool from '../db.js'
+import { createUser } from './userModel.js';
+
+
+export async function createStudent(studentId, email, name, password, credit) {
+  await createUser(email, name, password);
+
+  await pool.query(
+    `INSERT INTO student (student_id, email, credit, status) VALUES (?, ?, ?, ?)`,
+    [studentId, email, credit, null]
+  );
+  return { studentId, email };
+}
+
 
 export async function fetchCoursesWithSections(courseId = null) {
   const query = `

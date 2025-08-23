@@ -1,4 +1,5 @@
 import express from 'express';
+import { authenticateToken, authorizeRole } from '../middleware/authMiddleware.js';
 import {
   getAllCourses,
   getCourseDetail,
@@ -11,6 +12,8 @@ import {
 
 const router = express.Router();
 
+
+router.use(authenticateToken, authorizeRole('student'));
 
 router.get('/courses', getAllCourses);
 router.get('/courses/:courseId', getCourseDetail);

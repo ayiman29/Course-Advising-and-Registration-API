@@ -1,5 +1,17 @@
 import pool from '../db.js'
 import { addCourse as studentAddCourse, dropCourse as studentDropCourse } from './studentModel.js';
+import { createUser } from './userModel.js';
+
+
+export async function createAdvisor(advisorId, email, name, password) {
+  await createUser(email, name, password);
+
+  await pool.query(
+    `INSERT INTO advisor (advisor_id, email) VALUES (?, ?)`,
+    [advisorId, email]
+  );
+  return { advisorId, email };
+}
 
 
 export async function getWaitingStudentsCourses() {

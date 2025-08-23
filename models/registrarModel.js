@@ -1,5 +1,16 @@
 import pool from '../db.js';
+import { createUser } from './userModel.js';
 
+
+export async function createRegistrar(registrarId, email, name, password) {
+  await createUser(email, name, password);
+
+  await pool.query(
+    `INSERT INTO registrar (registrar_id, email) VALUES (?, ?)`,
+    [registrarId, email]
+  );
+  return { registrarId, email };
+}
 
 export async function addCourse(courseId, title, name, examSchedule, courseCredit, registrarId, registrarEmail) {
   await pool.query(
