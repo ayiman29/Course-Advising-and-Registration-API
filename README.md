@@ -81,5 +81,5 @@ npm run dev
 
 * All course addition endpoints handle: credit limit, schedule clash, seat availability, and section swaps.
 * Transactions ensure data consistency for add/drop operations.
-* Endpoints are grouped by role: `/students`, `/advisors`, `/registrar`.
+* Endpoints are grouped by role: `/students`, `/advisors`, `/registrars`, `/auth`.
 
