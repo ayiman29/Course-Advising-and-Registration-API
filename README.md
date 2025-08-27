@@ -27,35 +27,55 @@ npm run dev
 
 ## API Endpoints
 
+### Auth
+
+| Method | Endpoint | Params / Body                  |
+| ------ | -------- | ------------------------------ |
+| POST   | /auth/signup | name, email, password, role |
+| POST   | /auth/login  | email, password             |
+
+---
+
 ### Student
+
+> All routes require authentication with role = `student`
 
 | Method | Endpoint                                  | Params / Body                                   |
 | ------ | ----------------------------------------- | ----------------------------------------------- |
 | GET    | /students/courses                         | -                                               |
-| GET    | /students/courses/\:courseId              | courseId                                        |
-| POST   | /students/add-course                      | studentId, courseId, sectionId, advisorId |
-| POST   | /students/drop-course                     | studentId, courseId, sectionId               |
-| GET    | /students/my-courses/\:studentId       | studentId                                    |
-| GET    | /students/info/\:studentId             | studentId                                    |
-| PUT    | /students/confirm-advising/\:studentId | studentEmail                                    |
+| GET    | /students/courses/:courseId               | courseId                                        |
+| POST   | /students/add-course                      | studentId, courseId, sectionId, advisorId       |
+| POST   | /students/drop-course                     | studentId, courseId, sectionId                  |
+| GET    | /students/my-courses/:studentId           | studentId                                       |
+| GET    | /students/info/:studentId                 | studentId                                       |
+| PUT    | /students/confirm-advising/:studentId     | studentEmail                                    |
+
+---
 
 ### Advisor
+
+> All routes require authentication with role = `advisor`
 
 | Method | Endpoint                         | Params / Body                                   |
 | ------ | -------------------------------- | ----------------------------------------------- |
 | GET    | /advisors/waiting-students       | -                                               |
-| PUT    | /advisors/approve/\:studentId | studentId, status (`approved` / `denied`)    |
-| POST   | /advisors/add-course             | advisorId, studentId, courseId, sectionId |
-| POST   | /advisors/drop-course            | studentId, courseId, sectionId               |
+| PUT    | /advisors/approve/:studentId     | studentId, status (`approved` / `denied`)       |
+| POST   | /advisors/add-course             | advisorId, studentId, courseId, sectionId       |
+| POST   | /advisors/drop-course            | studentId, courseId, sectionId                  |
+
+---
 
 ### Registrar
 
+> All routes require authentication with role = `registrar`
+
 | Method | Endpoint                                  | Params / Body                                                    |
 | ------ | ----------------------------------------- | ---------------------------------------------------------------- |
-| POST   | /registrar/course                         | courseId, title, name, examSchedule, courseCredit, registrarEmail, registrarId|
-| DELETE | /registrar/course/\:courseId              | courseId                                                         |
+| POST   | /registrar/course                         | courseId, title, name, examSchedule, courseCredit, registrarEmail, registrarId |
+| DELETE | /registrar/course/:courseId               | courseId                                                         |
 | POST   | /registrar/section                        | courseId, sectionId, schedule, faculty, seatAvailability         |
-| DELETE | /registrar/section/\:courseId/\:sectionId | courseId, sectionId                                              |
+| DELETE | /registrar/section/:courseId/:sectionId   | courseId, sectionId                                              |
+
 
 ## Notes
 
