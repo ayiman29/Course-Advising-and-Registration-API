@@ -48,7 +48,7 @@ npm run dev
 | POST   | /students/drop-course                     | studentId, courseId, sectionId                  |
 | GET    | /students/my-courses/:studentId           | studentId                                       |
 | GET    | /students/info/:studentId                 | studentId                                       |
-| PUT    | /students/confirm-advising/:studentId     | studentEmail                                    |
+| PUT    | /students/confirm-advising/:studentId     | studentId                                       |
 
 ---
 
