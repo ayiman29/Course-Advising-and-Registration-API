@@ -62,3 +62,18 @@ export async function dropCourse(req, res) {
     res.status(400).json({ error: err.message });
   }
 }
+
+export async function getStudentCourses(req, res) {
+  const studentId = parseInt(req.params.studentId);
+
+  if (isNaN(studentId)) {
+    return res.status(400).json({ error: "Missing or invalid studentId in request parameters" });
+  }
+
+  try {
+    const courses = await advisorModel.getStudentCourses(studentId);
+    res.status(200).json(courses);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}

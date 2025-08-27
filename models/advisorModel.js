@@ -93,3 +93,20 @@ export async function advisorDropCourse(advisorId, studentId, courseId, sectionI
   return await studentDropCourse(studentId, courseId, sectionId, advisorId);
 }
 
+export async function getStudentCourses(studentId) {
+  const [courses] = await pool.query(
+    `SELECT 
+        c.course_id,
+        c.title,
+        c.name,
+        s.section_id,
+        s.schedule,
+        s.faculty
+     FROM manages m
+     JOIN course c ON m.course_id = c.course_id
+     JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
+     WHERE m.student_id = ?`,
+    [studentId]
+  );
+  return courses;
+}

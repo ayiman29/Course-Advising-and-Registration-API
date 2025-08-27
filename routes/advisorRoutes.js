@@ -5,6 +5,7 @@ import {
   approveAdvising,
   addCourse,
   dropCourse,
+  getStudentCourses,
 } from '../controllers/advisorController.js';
 
 const router = express.Router();
@@ -16,5 +17,7 @@ router.get('/waiting-students', getWaitingStudentsCourses);
 router.put('/approve/:studentId', approveAdvising);
 router.post('/add-course', addCourse);
 router.post('/drop-course', dropCourse);
+router.get('/student-courses/:studentId', getStudentCourses);
+
 
 export default router;
