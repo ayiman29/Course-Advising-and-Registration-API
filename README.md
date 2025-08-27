@@ -62,6 +62,9 @@ npm run dev
 | PUT    | /advisors/approve/:studentId     | studentId, status (`approved` / `denied`)       |
 | POST   | /advisors/add-course             | advisorId, studentId, courseId, sectionId       |
 | POST   | /advisors/drop-course            | studentId, courseId, sectionId                  |
+| GET    | /advisors/student-courses/:studentId | studentId                                   |
+| GET    | /advisors/courses/:studentId    | studentId                                        | 
+| GET    | /advisors/course-detail/:courseId | courseId                                       | 
 
 ---
 
