@@ -63,6 +63,7 @@ export async function dropCourse(req, res) {
   }
 }
 
+
 export async function getStudentCourses(req, res) {
   const studentId = parseInt(req.params.studentId);
 
@@ -75,5 +76,43 @@ export async function getStudentCourses(req, res) {
     res.status(200).json(courses);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+}
+
+
+
+export async function fetchUnselectedCourses(req, res) {
+  const studentId = parseInt(req.params.studentId);
+
+  if (isNaN(studentId)) {
+    return res.status(400).json({ error: "Invalid student ID" });
+  }
+
+  try {
+    const courses = await advisorModel.fetchUnselectedCourses(studentId);
+    res.status(200).json(courses);
+  } catch (err) {
+    console.error("Error fetching unselected courses:", err);
+    res.status(500).json({ error: "Failed to fetch unselected courses" });
+  }
+}
+
+
+export async function getCourseDetail(req, res) {
+  const courseId = parseInt(req.params.courseId);
+
+  if (isNaN(courseId)) {
+    return res.status(400).json({ error: "Invalid course ID" });
+  }
+
+  try {
+    const course = await advisorModel.getCourseDetail(courseId);
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+    res.status(200).json(course);
+  } catch (err) {
+    console.error("Error fetching course detail:", err);
+    res.status(500).json({ error: "Failed to fetch course detail" });
   }
 }

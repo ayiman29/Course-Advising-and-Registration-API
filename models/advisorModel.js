@@ -110,3 +110,97 @@ export async function getStudentCourses(studentId) {
   );
   return courses;
 }
+
+
+
+export async function fetchUnselectedCourses(studentId) {
+  const query = `
+    SELECT 
+      c.course_id,
+      c.title,
+      c.name AS course_name,
+      c.exam_schedule,
+      c.course_credit,
+      s.section_id,
+      s.schedule,
+      s.seat_availability,
+      s.faculty
+    FROM course c
+    JOIN section s ON c.course_id = s.course_id
+    WHERE (c.course_id, s.section_id) NOT IN (
+      SELECT m.course_id, m.section_id 
+      FROM manages m 
+      WHERE m.student_id = ?
+    )
+    ORDER BY c.course_id, s.section_id
+  `;
+
+  const [rows] = await pool.query(query, [studentId]);
+
+  const courseMap = new Map();
+
+  for (const row of rows) {
+    if (!courseMap.has(row.course_id)) {
+      courseMap.set(row.course_id, {
+        course_id: row.course_id,
+        title: row.title,
+        course_name: row.course_name,
+        exam_schedule: row.exam_schedule,
+        course_credit: row.course_credit,
+        sections: []
+      });
+    }
+
+    courseMap.get(row.course_id).sections.push({
+      section_id: row.section_id,
+      schedule: row.schedule,
+      seat_availability: row.seat_availability,
+      faculty: row.faculty
+    });
+  }
+
+  return Array.from(courseMap.values());
+}
+
+export async function getCourseDetail(courseId) {
+  const query = `
+    SELECT 
+      c.course_id,
+      c.title,
+      c.name AS course_name,
+      c.exam_schedule,
+      c.course_credit,
+      s.section_id,
+      s.schedule,
+      s.seat_availability,
+      s.faculty
+    FROM course c
+    JOIN section s ON c.course_id = s.course_id
+    WHERE c.course_id = ?
+    ORDER BY s.section_id
+  `;
+
+  const [rows] = await pool.query(query, [courseId]);
+
+  if (rows.length === 0) return null;
+
+  const course = {
+    course_id: rows[0].course_id,
+    title: rows[0].title,
+    course_name: rows[0].course_name,
+    exam_schedule: rows[0].exam_schedule,
+    course_credit: rows[0].course_credit,
+    sections: []
+  };
+
+  for (const row of rows) {
+    course.sections.push({
+      section_id: row.section_id,
+      schedule: row.schedule,
+      seat_availability: row.seat_availability,
+      faculty: row.faculty
+    });
+  }
+
+  return course;
+}
