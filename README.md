@@ -56,15 +56,15 @@ npm run dev
 
 > All routes require authentication with role = `advisor`
 
-| Method | Endpoint                         | Params / Body                                   |
-| ------ | -------------------------------- | ----------------------------------------------- |
-| GET    | /advisors/waiting-students       | -                                               |
-| PUT    | /advisors/approve/:studentId     | studentId, status (`approved` / `denied`)       |
-| POST   | /advisors/add-course             | advisorId, studentId, courseId, sectionId       |
-| POST   | /advisors/drop-course            | studentId, courseId, sectionId                  |
-| GET    | /advisors/student-courses/:studentId | studentId                                   |
-| GET    | /advisors/courses/:studentId    | studentId                                        | 
-| GET    | /advisors/course-detail/:courseId | courseId                                       | 
+| Method | Endpoint                         | Params / Body                                                                           |
+| ------ | -------------------------------- | ----------------------------------------------------------------------------------------|
+| GET    | /advisors/waiting-students       | -                                                                                       |
+| PUT    | /advisors/approve/:studentId     | studentId, status (`approved` / `denied`)                                               |
+| POST   | /advisors/add-course             | advisorId, studentId, courseId, sectionId                                               |
+| POST   | /advisors/drop-course            | studentId, courseId, sectionId                                                          |
+| GET    | /advisors/student-courses/:studentId | studentId     [For fetching selected courses by students]                           |
+| GET    | /advisors/courses/:studentId    | studentId          [For fetching all courses other than the selected ones by a student]  | 
+| GET    | /advisors/course-detail/:courseId | courseId                                                                               | 
 
 ---
 
