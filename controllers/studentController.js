@@ -9,6 +9,30 @@ export async function getAllCourses(req, res) {
     res.status(500).json({ error: "Failed to fetch courses" });
   }
 }
+export async function getStudentIdFromEmail(req, res) {
+  try {
+    const email =
+      req.params.email ??
+      req.query.email ??
+      req.body?.email ??
+      null;
+
+    if (!email) {
+      return res.status(400).json({ error: "email is required" });
+    }
+
+    const row = await studentModel.getStudentIdByEmail(email);
+    if (!row) {
+      return res.status(404).json({ error: "student not found for provided email" });
+    }
+
+    return res.json({ student_id: row.student_id, email: row.email });
+  } catch (err) {
+    console.error("getStudentIdFromEmail error:", err);
+    return res.status(500).json({ error: "internal server error" });
+  }
+}
+
 
 export async function getCourseDetail(req, res) {
   const courseId = parseInt(req.params.courseId);
@@ -106,3 +130,4 @@ export async function confirmAdvising(req, res) {
     res.status(400).json({ error: err.message });
   }
 }
+

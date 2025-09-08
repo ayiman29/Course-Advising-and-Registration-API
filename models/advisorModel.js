@@ -1,5 +1,17 @@
 import pool from '../db.js'
 import { addCourse as studentAddCourse, dropCourse as studentDropCourse } from './studentModel.js';
+import { createUser } from './userModel.js';
+
+
+export async function createAdvisor(advisorId, email, name, password) {
+  await createUser(email, name, password);
+
+  await pool.query(
+    `INSERT INTO advisor (advisor_id, email) VALUES (?, ?)`,
+    [advisorId, email]
+  );
+  return { advisorId, email };
+}
 
 
 export async function getWaitingStudentsCourses() {
@@ -81,3 +93,140 @@ export async function advisorDropCourse(advisorId, studentId, courseId, sectionI
   return await studentDropCourse(studentId, courseId, sectionId, advisorId);
 }
 
+export async function getStudentCourses(studentId) {
+  const [courses] = await pool.query(
+    `SELECT 
+        c.course_id,
+        c.title,
+        c.name,
+        s.section_id,
+        s.schedule,
+        s.faculty,
+        s.schedule,
+        c.course_credit,
+
+        s.seat_availability
+  
+     FROM manages m
+     JOIN course c ON m.course_id = c.course_id
+     JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
+     WHERE m.student_id = ?`,
+    [studentId]
+  );
+  return courses;
+}
+
+
+export async function fetchUnselectedCourses(studentId) {
+  const query = `
+    SELECT 
+      c.course_id,
+      c.title,
+      c.name AS course_name,
+      c.exam_schedule,
+      c.course_credit,
+      s.section_id,
+      s.schedule,
+      s.seat_availability,
+      s.faculty
+    FROM course c
+    JOIN section s 
+      ON c.course_id = s.course_id
+    /* Only return rows if the student exists */
+    WHERE EXISTS (
+      SELECT 1 
+      FROM student st 
+      WHERE st.student_id = ?
+    )
+    /* Exclude sections already selected by this student */
+      AND NOT EXISTS (
+        SELECT 1
+        FROM manages m
+        WHERE m.student_id = ?
+          AND m.course_id  = c.course_id
+          AND m.section_id = s.section_id
+      )
+    ORDER BY c.course_id, s.section_id
+  `;
+
+  const [rows] = await pool.query(query, [studentId, studentId]);
+
+  const courseMap = new Map();
+  for (const row of rows) {
+    if (!courseMap.has(row.course_id)) {
+      courseMap.set(row.course_id, {
+        course_id: row.course_id,
+        title: row.title,
+        course_name: row.course_name,
+        exam_schedule: row.exam_schedule,
+        course_credit: row.course_credit,
+        sections: []
+      });
+    }
+    courseMap.get(row.course_id).sections.push({
+      section_id: row.section_id,
+      schedule: row.schedule,
+      seat_availability: row.seat_availability,
+      faculty: row.faculty
+    });
+  }
+
+  return Array.from(courseMap.values());
+}
+
+
+export async function getCourseDetail(courseId) {
+  const query = `
+    SELECT 
+      c.course_id,
+      c.title,
+      c.name AS course_name,
+      c.exam_schedule,
+      c.course_credit,
+      s.section_id,
+      s.schedule,
+      s.seat_availability,
+      s.faculty
+    FROM course c
+    JOIN section s ON c.course_id = s.course_id
+    WHERE c.course_id = ?
+    ORDER BY s.section_id
+  `;
+
+  const [rows] = await pool.query(query, [courseId]);
+
+  if (rows.length === 0) return null;
+
+  const course = {
+    course_id: rows[0].course_id,
+    title: rows[0].title,
+    course_name: rows[0].course_name,
+    exam_schedule: rows[0].exam_schedule,
+    course_credit: rows[0].course_credit,
+    sections: []
+  };
+
+  for (const row of rows) {
+    course.sections.push({
+      section_id: row.section_id,
+      schedule: row.schedule,
+      seat_availability: row.seat_availability,
+      faculty: row.faculty
+    });
+  }
+
+  return course;
+}
+
+
+export async function getAdvisorIdByEmail(email) {
+  const [rows] = await pool.query(
+    "SELECT advisor_id, email FROM advisor WHERE email = ? LIMIT 1",
+    [email]
+  );
+  return rows[0] || null;
+}
+
+export default {
+  getAdvisorIdByEmail,
+};
