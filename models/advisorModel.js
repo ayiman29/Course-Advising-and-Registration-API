@@ -104,7 +104,6 @@ export async function getStudentCourses(studentId) {
         s.faculty,
         s.schedule,
         c.course_credit,
-
         s.seat_availability
   
      FROM manages m
@@ -152,6 +151,7 @@ export async function fetchUnselectedCourses(studentId) {
   const [rows] = await pool.query(query, [studentId, studentId]);
 
   const courseMap = new Map();
+  
   for (const row of rows) {
     if (!courseMap.has(row.course_id)) {
       courseMap.set(row.course_id, {
@@ -163,6 +163,8 @@ export async function fetchUnselectedCourses(studentId) {
         sections: []
       });
     }
+
+    
     courseMap.get(row.course_id).sections.push({
       section_id: row.section_id,
       schedule: row.schedule,
@@ -216,6 +218,7 @@ export async function getCourseDetail(courseId) {
   }
 
   return course;
+
 }
 
 
@@ -230,3 +233,4 @@ export async function getAdvisorIdByEmail(email) {
 export default {
   getAdvisorIdByEmail,
 };
+
