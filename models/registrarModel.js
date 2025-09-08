@@ -56,4 +56,3 @@ export async function deleteSection(courseId, sectionId) {
     [courseId, sectionId]
   );
 }
-

@@ -12,6 +12,14 @@ export async function createStudent(studentId, email, name, password, credit) {
   return { studentId, email };
 }
 
+export async function getStudentIdByEmail(email) {
+  const [rows] = await pool.query(
+    "SELECT student_id, email FROM student WHERE email = ? LIMIT 1",
+    [email]
+  );
+  return rows[0] ?? null;
+}
+
 
 export async function fetchCoursesWithSections(courseId = null) {
   const query = `
@@ -318,4 +326,4 @@ export async function confirmAdvising(studentId) {
 
 // issue: seat availability not being checked (SOLVED)
 // issue: when max_credit, can't swap course (SOLVED)
-// issue: advisor email used but not needed, use some default?
+// issue: advisor email used but not needed, use some default? ( SOLVED;( )

@@ -116,3 +116,28 @@ export async function getCourseDetail(req, res) {
     res.status(500).json({ error: "Failed to fetch course detail" });
   }
 }
+
+
+export async function getAdvisorIdFromEmail(req, res) {
+  try {
+    const email =
+      req.params.email ??
+      req.query.email ??
+      req.body?.email ??
+      null;
+
+    if (!email) {
+      return res.status(400).json({ error: "email is required" });
+    }
+
+    const row = await advisorModel.getAdvisorIdByEmail(email);
+    if (!row) {
+      return res.status(404).json({ error: "advisor not found for provided email" });
+    }
+
+    return res.json({ advisor_id: row.advisor_id, email: row.email });
+  } catch (err) {
+    console.error("getAdvisorIdFromEmail error:", err);
+    return res.status(500).json({ error: "internal server error" });
+  }
+}

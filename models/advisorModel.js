@@ -101,7 +101,11 @@ export async function getStudentCourses(studentId) {
         c.name,
         s.section_id,
         s.schedule,
-        s.faculty
+        s.faculty,
+        s.schedule,
+        c.course_credit,
+        s.seat_availability
+  
      FROM manages m
      JOIN course c ON m.course_id = c.course_id
      JOIN section s ON m.course_id = s.course_id AND m.section_id = s.section_id
@@ -110,7 +114,6 @@ export async function getStudentCourses(studentId) {
   );
   return courses;
 }
-
 
 
 export async function fetchUnselectedCourses(studentId) {
@@ -126,19 +129,29 @@ export async function fetchUnselectedCourses(studentId) {
       s.seat_availability,
       s.faculty
     FROM course c
-    JOIN section s ON c.course_id = s.course_id
-    WHERE (c.course_id, s.section_id) NOT IN (
-      SELECT m.course_id, m.section_id 
-      FROM manages m 
-      WHERE m.student_id = ?
+    JOIN section s 
+      ON c.course_id = s.course_id
+    /* Only return rows if the student exists */
+    WHERE EXISTS (
+      SELECT 1 
+      FROM student st 
+      WHERE st.student_id = ?
     )
+    /* Exclude sections already selected by this student */
+      AND NOT EXISTS (
+        SELECT 1
+        FROM manages m
+        WHERE m.student_id = ?
+          AND m.course_id  = c.course_id
+          AND m.section_id = s.section_id
+      )
     ORDER BY c.course_id, s.section_id
   `;
 
-  const [rows] = await pool.query(query, [studentId]);
+  const [rows] = await pool.query(query, [studentId, studentId]);
 
   const courseMap = new Map();
-
+  
   for (const row of rows) {
     if (!courseMap.has(row.course_id)) {
       courseMap.set(row.course_id, {
@@ -151,6 +164,7 @@ export async function fetchUnselectedCourses(studentId) {
       });
     }
 
+    
     courseMap.get(row.course_id).sections.push({
       section_id: row.section_id,
       schedule: row.schedule,
@@ -161,6 +175,7 @@ export async function fetchUnselectedCourses(studentId) {
 
   return Array.from(courseMap.values());
 }
+
 
 export async function getCourseDetail(courseId) {
   const query = `
@@ -203,4 +218,19 @@ export async function getCourseDetail(courseId) {
   }
 
   return course;
+
 }
+
+
+export async function getAdvisorIdByEmail(email) {
+  const [rows] = await pool.query(
+    "SELECT advisor_id, email FROM advisor WHERE email = ? LIMIT 1",
+    [email]
+  );
+  return rows[0] || null;
+}
+
+export default {
+  getAdvisorIdByEmail,
+};
+
