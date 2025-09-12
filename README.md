@@ -5,6 +5,7 @@
 app.js
 db.js
 controllers/
+middleware/
 models/
 routes/
 package.json
