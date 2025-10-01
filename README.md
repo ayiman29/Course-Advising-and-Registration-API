@@ -1,5 +1,9 @@
 # Course Advising and Registration API
-:)
+:)<br>
+A backend REST API built with **Express.js** and **MySQL** for managing university course advising and registration workflows.
+It is part of a full-stack project, and the frontend can be found here:
+**[https://github.com/tahi4/connect-advising-frontend](https://github.com/tahi4/connect-advising-frontend)**
+
 ## Directory Structure
 ```
 app.js
@@ -10,7 +14,7 @@ models/
 routes/
 package.json
 .gitignore
-
+misc
 ````
 
 ## Installation
@@ -50,6 +54,7 @@ npm run dev
 | GET    | /students/my-courses/:studentId           | studentId                                       |
 | GET    | /students/info/:studentId                 | studentId                                       |
 | PUT    | /students/confirm-advising/:studentId     | studentId                                       |
+| GET    | /students/id-by-email/:email              | studentEmail                                    |
 
 ---
 
@@ -66,6 +71,7 @@ npm run dev
 | GET    | /advisors/student-courses/:studentId | studentId     [For fetching selected courses by students]                           |
 | GET    | /advisors/courses/:studentId    | studentId          [For fetching all courses other than the selected ones by a student]  | 
 | GET    | /advisors/course-detail/:courseId | courseId                                                                               | 
+| GET    | /advisors/id-by-email/:email       | studentEmail                                                                          |
 
 ---
 
@@ -75,10 +81,10 @@ npm run dev
 
 | Method | Endpoint                                  | Params / Body                                                    |
 | ------ | ----------------------------------------- | ---------------------------------------------------------------- |
-| POST   | /registrar/course                         | courseId, title, name, examSchedule, courseCredit, registrarEmail, registrarId |
-| DELETE | /registrar/course/:courseId               | courseId                                                         |
-| POST   | /registrar/section                        | courseId, sectionId, schedule, faculty, seatAvailability         |
-| DELETE | /registrar/section/:courseId/:sectionId   | courseId, sectionId                                              |
+| POST   | /registrars/course                         | courseId, title, name, examSchedule, courseCredit, registrarEmail, registrarId |
+| DELETE | /registrars/course/:courseId               | courseId                                                         |
+| POST   | /registrars/section                        | courseId, sectionId, schedule, faculty, seatAvailability         |
+| DELETE | /registrars/section/:courseId/:sectionId   | courseId, sectionId                                              |
 
 
 ## Notes
