@@ -87,6 +87,17 @@ npm run dev
 | DELETE | /registrars/section/:courseId/:sectionId   | courseId, sectionId                                              |
 
 
+
+## ER and Schema
+
+### ER Diagram
+<img width="993" height="673" alt="image" src="https://github.com/user-attachments/assets/34b7eec4-6f4a-4199-a7e1-81366552e53b" />
+
+---
+
+### Schema Diagram
+<img width="864" height="705" alt="image" src="https://github.com/user-attachments/assets/4f7c64eb-298d-4881-97c8-c538e0479726" />
+
 ## Notes
 
 * All course addition endpoints handle: credit limit, schedule clash, seat availability, and section swaps.
